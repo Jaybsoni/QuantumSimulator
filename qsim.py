@@ -12,30 +12,30 @@ class Qbit:
             # print(la.norm(c1)**2 + la.norm(c2)**2)
             pass
 
-        self.state_0 = c1
-        self.state_1 = c2
+        self.state = np.array([c1, c2])
 
     def __repr__(self):
-        return "{0}|0> + {1}|1>".format(self.state_0, self.state_1)
+        return "{0}|0> + {1}|1>".format(self.state[0], self.state[1])
 
     def measure(self):
-        prob_0 = la.norm(self.state_0)
+        prob_0 = la.norm(self.state[0])
         result = np.random.binomial(1, prob_0, size=1)
         if result:
-            self.state_0 = 1
-            self.state_1 = 0
+            self.state = np.array([0, 1])
         else:
-            self.state_0 = 0
-            self.state_1 = 1
+            self.state = np.array([0, 1])
         print(self)
 
 
+def h_gate(qbit):
+    hadamard_mat = 1 / np.sqrt(2) * np.array([[1,  1],
+                                              [1, -1]])
+    qbit.state = qbit.state @ hadamard_mat
+    return
+
+
 def main():
-    for i in range(5):
-        x = Qbit(1 / (np.sqrt(2)), 1 / (np.sqrt(2)))
-        print('Measurement #{0}: |x> = {1}'.format(i, x))
-        x.measure()
-        print('\n')
+    return
 
 
 if __name__ == "__main__":
