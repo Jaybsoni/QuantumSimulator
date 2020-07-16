@@ -30,8 +30,19 @@ class Qbit:
 def h_gate(qbit):
     hadamard_mat = 1 / np.sqrt(2) * np.array([[1,  1],
                                               [1, -1]])
-    qbit.state = qbit.state @ hadamard_mat
+    qbit.state = hadamard_mat @ qbit.state
     return
+
+
+def cnot(control_qbit, target_qbit):
+    combined_state = np.kron(control_qbit.state, target_qbit.state)
+    cnot_mat = np.array([[1, 0, 0, 0],
+                         [0, 1, 0, 0],
+                         [0, 0, 0, 1],
+                         [0, 0, 1, 0]])
+
+    resultant_state = cnot_mat @ combined_state
+    return resultant_state
 
 
 def main():
