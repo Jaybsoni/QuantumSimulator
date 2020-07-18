@@ -45,6 +45,30 @@ def cnot(control_qbit, target_qbit):
     return resultant_state
 
 
+def pauli_x(qbit):
+    x_mat = np.array([[0, 1],
+                      [1, 0]])
+
+    qbit.state = x_mat @ qbit.state
+    return
+
+
+def pauli_y(qbit):
+    y_mat = np.array([[0, -j],
+                      [j, 0]])
+
+    qbit.state = y_mat @ qbit.state
+    return
+
+
+def pauli_z(qbit):
+    z_mat = np.array([[1, 0],
+                      [0, -1]])
+
+    qbit.state = z_mat @ qbit.state
+    return
+
+
 def main():
     return
 
