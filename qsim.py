@@ -27,6 +27,29 @@ class Qbit:
         print(self)
 
 
+class Circuit:
+
+    def __init__(self, num_qbits, circuit_depth):
+        assert(num_qbits > 0)
+        self.lst_qbits = []
+        self.gate_array = []
+
+        gates = []
+        for j in range(circuit_depth):
+            gates.append('-')
+
+        for i in range(num_qbits):
+            self.lst_qbits.append(Qbit(1, 0))
+            self.gate_array.append(gates)
+            
+
+def split_state(vect):
+    assert(len(vect) == 4)
+    qbit1 = Qbit(vect[0] + vect[1], vect[2] + vect[3])
+    qbit2 = Qbit(vect[0] + vect[2], vect[1] + vect[3])
+    return qbit1, qbit2
+
+
 def h_gate(qbit):
     hadamard_mat = 1 / np.sqrt(2) * np.array([[1,  1],
                                               [1, -1]])
@@ -42,7 +65,7 @@ def cnot(control_qbit, target_qbit):
                          [0, 0, 1, 0]])
 
     resultant_state = cnot_mat @ combined_state
-    return resultant_state
+    return split_state(resultant_state)
 
 
 def pauli_x(qbit):
