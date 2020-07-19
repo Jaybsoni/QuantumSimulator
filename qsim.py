@@ -31,6 +31,8 @@ class Circuit:
 
     def __init__(self, num_qbits, circuit_depth):
         assert(num_qbits > 0)
+        self.circuit_depth = circuit_depth
+        self.num_qbits = num_qbits
         self.lst_qbits = []
         self.gate_array = []
 
@@ -41,7 +43,44 @@ class Circuit:
         for i in range(num_qbits):
             self.lst_qbits.append(Qbit(1, 0))
             self.gate_array.append(gates)
-            
+
+        return
+
+    def __repr__(self):
+        for i in range(self.num_qbits):
+            row = '|q{}>: '.format(i)
+            for gate_element in self.gate_array[i]:
+                row += '--{}'.format(gate_element)
+
+            print(row + '--M')
+        return
+
+    def set_gates(self):
+        print('circuit depth, num of qbits = {0}, {1}'.format(self.circuit_depth, self.num_qbits))
+        print('hadamard gate: H \n' +
+              'pauli x gate: X \n' +
+              'pauli y gate: Y \n' +
+              'pauli z gate: Z \n ' +
+              'cnot gate: CN \n')
+
+        for i in range(self.circuit_depth):
+            add_gate = input('input gate,qbit_index (for cnot: CN,control_index,target_index): ')
+
+            while add_gate != '':
+                meta = add_gate.split(',')
+                meta_gate = meta[0]  # gate
+                meta_qbit1 = int(meta[1])  # for cnot gate its control index, else its qbit index
+                meta_qbit2 = int(meta[-1])  # for cnot gate its target index, else its qbit index
+
+                if meta_gate == 'CN':
+                    self.gate_array[meta_qbit1][i] = 'C'
+                    self.gate_array[meta_qbit2][i] = 'T'
+
+                else:
+                    self.gate_array[meta_qbit1][i] = meta_gate
+
+                add_gate = input('input gate,qbit_index (for cnot: CN,control_index,target_index): ')
+
 
 def split_state(vect):
     assert(len(vect) == 4)
