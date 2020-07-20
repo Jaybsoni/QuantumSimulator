@@ -36,24 +36,25 @@ class Circuit:
         self.lst_qbits = []
         self.gate_array = []
 
-        gates = []
-        for j in range(circuit_depth):
-            gates.append('-')
-
         for i in range(num_qbits):
             self.lst_qbits.append(Qbit(1, 0))
-            self.gate_array.append(gates)
 
+            gates = []
+            for j in range(circuit_depth):
+                gates.append('-')
+
+            self.gate_array.append(gates)
         return
 
     def __repr__(self):
+        disp_circuit = ''
         for i in range(self.num_qbits):
             row = '|q{}>: '.format(i)
             for gate_element in self.gate_array[i]:
                 row += '--{}'.format(gate_element)
-
-            print(row + '--M')
-        return
+            row += '--M \n'
+            disp_circuit += row
+        return disp_circuit
 
     def set_gates(self):
         print('circuit depth, num of qbits = {0}, {1}'.format(self.circuit_depth, self.num_qbits))
@@ -64,10 +65,13 @@ class Circuit:
               'cnot gate: CN \n')
 
         for i in range(self.circuit_depth):
-            add_gate = input('input gate,qbit_index (for cnot: CN,control_index,target_index): ')
+            add_gate = input('input gate,qbit_index at circuit depth {} ' +
+                             '(for cnot: CN,control_index,target_index): '.format(i + 1))
 
             while add_gate != '':
+                print(add_gate)
                 meta = add_gate.split(',')
+                print(meta)
                 meta_gate = meta[0]  # gate
                 meta_qbit1 = int(meta[1])  # for cnot gate its control index, else its qbit index
                 meta_qbit2 = int(meta[-1])  # for cnot gate its target index, else its qbit index
@@ -79,7 +83,36 @@ class Circuit:
                 else:
                     self.gate_array[meta_qbit1][i] = meta_gate
 
-                add_gate = input('input gate,qbit_index (for cnot: CN,control_index,target_index): ')
+                print(self)
+                add_gate = input('input gate,qbit_index at circuit depth {} ' +
+                                 '(for cnot: CN,control_index,target_index): '.format(i + 1))
+        return
+
+    @staticmethod
+    def apply_gate(gate_str, *qbits):
+        if gate_str == 'H':
+            h_gate(qbits[0])
+
+        elif gate_str == 'X':
+            pauli_x(qbits[0])
+
+        elif gate_str == 'Y':
+            pauli_y(qbits[0])
+
+        elif gate_str == 'Z':
+            pauli_z(qbits[0])
+
+        elif gate_str == 'CN':
+            cnot(qbits[0], qbits[1])
+
+        else:
+            print('Invalid gate!')
+        return
+
+    def measure_circ(self):
+        for i in range(self.circuit_depth):
+            for j in range(self.num_qbits):
+                curr_qbit = self.lst_qbits[j]
 
 
 def split_state(vect):
