@@ -9,7 +9,8 @@ class Qbit:
         try:
             assert (la.norm(c1)**2 + la.norm(c2)**2 == 1)
         except AssertionError:
-            # print(la.norm(c1)**2 + la.norm(c2)**2)
+            c1 = 1
+            c2 = 0
             pass
 
         self.state = np.array([c1, c2])
@@ -89,7 +90,7 @@ class Circuit:
         return
 
     @staticmethod
-    def apply_gate(gate_str, *qbits):
+    def apply_gate(gate_str='', *qbits):
         if gate_str == 'H':
             h_gate(qbits[0])
 
