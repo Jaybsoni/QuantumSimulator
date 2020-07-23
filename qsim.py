@@ -25,7 +25,6 @@ class Qbit:
             self.state = np.array([0, 1])
         else:
             self.state = np.array([0, 1])
-        print(self)
 
 
 class Circuit:
@@ -50,7 +49,7 @@ class Circuit:
     def __repr__(self):
         disp_circuit = ''
         for i in range(self.num_qbits):
-            row = '|q{}>: '.format(i)
+            row = 'q{}: |0>'.format(i)
             for gate_element in self.gate_array[i]:
                 row += '--{}'.format(gate_element)
             row += '--M \n'
@@ -90,8 +89,11 @@ class Circuit:
         return
 
     @staticmethod
-    def apply_gate(gate_str='', *qbits):
-        if gate_str == 'H':
+    def apply_gate(*qbits, gate_str=''):
+        if gate_str == '-':
+            pass
+
+        elif gate_str == 'H':
             h_gate(qbits[0])
 
         elif gate_str == 'X':
@@ -110,10 +112,28 @@ class Circuit:
             print('Invalid gate!')
         return
 
-    def measure_circ(self):
+    def measure_circ(self, shots=100):
         for i in range(self.circuit_depth):
             for j in range(self.num_qbits):
-                curr_qbit = self.lst_qbits[j]
+                gate_string = self.gate_array[j][i]
+
+                if gate_string == 'T':
+                    pass
+
+                elif gate_string == 'C':
+                    cntrl_qbit = self.lst_qbits[j]
+
+                    for k in range(self.num_qbits):
+                        target_str = self.gate_array[k][i]
+                        if target_str == 'T':
+                            targt_qbit = self.lst_qbits[k]
+                            self.apply_gate(cntrl_qbit, targt_qbit, gate_str='CN')
+
+                else:
+                    curr_qbit = self.lst_qbits[j]
+                    self.apply_gate(curr_qbit, gate_str=gate_string)
+
+        result_array = np.zeros(2**self.num_qbits)
 
 
 def split_state(vect):
