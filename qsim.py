@@ -4,7 +4,7 @@ from numpy import linalg as la
 
 
 class Qbit:
-
+# What the heck is going on??
     def __init__(self, c1, c2):
         try:
             assert (la.norm(c1)**2 + la.norm(c2)**2 == 1)
