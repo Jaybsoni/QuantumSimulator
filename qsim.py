@@ -65,7 +65,7 @@ class Circuit:
             if index in qbit_ind:
                 gate_lst.append(gate_str)
             else:
-                gate_lst.append('')
+                gate_lst.append('-')
         return
 
     def add_dq_gate(self, control_ind, target_ind, gate_str):
@@ -75,10 +75,41 @@ class Circuit:
             elif index == target_ind:
                 gate_lst.append('T' + gate_str)
             else:
-                gate_lst.append('')
+                gate_lst.append('-')
         return
 
-    def apply_controlgate(self, contr):
+    @staticmethod
+    def apply_controlgate(control_qbit, target_qbit, unitary_mat):
+        a = np.array([[0, 0],
+                      [0, 1]])
+
+        b = np.array([[1, 0],
+                      [0, 0]])
+
+        cntrl_mat = np.kron(a, unitary_mat) + np.kron(b, np.identity(2))
+        combined_state = np.kron(control_qbit.state, target_qbit.state)
+        resultant_state = cntrl_mat @ combined_state
+
+        control_qbit.state, target_qbit.state = split_state(resultant_state)
+        return
+
+    def n(self, qbit_ind):
+        self.add_sq_gate(qbit_ind, 'N')
+        return
+
+    @staticmethod
+    def apply_n(qbit=Qbit(1, 0)):
+        not_mat = np.array([[0, 1],
+                            [1, 0]])
+        qbit.state = not_mat @ qbit.state
+        return not_mat
+
+    def cn(self, control_ind, target_ind):
+        self.add_dq_gate(control_ind, target_ind, 'N')
+        return
+
+    def apply_cn(self, control_qbit, target_qbit):
+        self.apply_controlgate(control_qbit, target_qbit, self.apply_n())
         return
 
     def h(self, qbit_ind):
@@ -92,20 +123,13 @@ class Circuit:
         qbit.state = hadamard_mat @ qbit.state
         return hadamard_mat
 
-    def cnot(self, control_ind, target_ind):
-        self.add_dq_gate(self, control_ind, target_ind, 'N')
+    def ch(self, control_ind, target_ind):
+        self.add_dq_gate(control_ind, target_ind, 'H')
         return
 
-    @staticmethod
-    def apply_cnot(control_qbit, target_qbit):
-        combined_state = np.kron(control_qbit.state, target_qbit.state)
-        cnot_mat = np.array([[1, 0, 0, 0],
-                             [0, 1, 0, 0],
-                             [0, 0, 0, 1],
-                             [0, 0, 1, 0]])
-
-        resultant_state = cnot_mat @ combined_state
-        return split_state(resultant_state)
+    def apply_ch(self, control_qbit, target_qbit):
+        self.apply_controlgate(control_qbit, target_qbit, self.apply_h())
+        return
 
     def x(self, qbit_ind):
         self.add_sq_gate(qbit_ind, 'X')
@@ -117,6 +141,14 @@ class Circuit:
                           [1, 0]])
 
         qbit.state = x_mat @ qbit.state
+        return x_mat
+
+    def cx(self, control_ind, target_ind):
+        self.add_dq_gate(control_ind, target_ind, 'X')
+        return
+
+    def apply_cx(self, control_qbit, target_qbit):
+        self.apply_controlgate(control_qbit, target_qbit, self.apply_x())
         return
 
     def y(self, qbit_ind):
@@ -131,6 +163,14 @@ class Circuit:
         qbit.state = y_mat @ qbit.state
         return y_mat
 
+    def cy(self, control_ind, target_ind):
+        self.add_dq_gate(control_ind, target_ind, 'Y')
+        return
+
+    def apply_cy(self, control_qbit, target_qbit):
+        self.apply_controlgate(control_qbit, target_qbit, self.apply_y())
+        return
+
     def z(self, qbit_ind):
         self.add_sq_gate(qbit_ind, 'Z')
         return
@@ -142,6 +182,14 @@ class Circuit:
 
         qbit.state = z_mat @ qbit.state
         return z_mat
+
+    def cz(self, control_ind, target_ind):
+        self.add_dq_gate(control_ind, target_ind, 'Z')
+        return
+
+    def apply_cz(self, control_qbit, target_qbit):
+        self.apply_controlgate(control_qbit, target_qbit, self.apply_z())
+        return
 
 
 def main():
