@@ -33,9 +33,11 @@ class Qbit:
 
 class Circuit:
 
-    def __init__(self, num_qbits):
+    def __init__(self, num_qbits, num_bits):
         assert(num_qbits > 0)
         self.lst_qbits = []
+        self.num_qbits = num_qbits
+        self.num_bits = num_bits
         self.gate_array = []
 
         for i in range(num_qbits):
@@ -48,19 +50,50 @@ class Circuit:
         for i in range(self.num_qbits):
             row = 'q{}: |0>'.format(i)
             for gate_element in self.gate_array[i]:
-                row += '--{}'.format(gate_element)
+                row += '--{0}'.format(gate_element)
             row += '\n'
             disp_circuit += row
         return disp_circuit
 
-    def measure_circ(self, shots=100):
+    def add_sq_gate(self, qbit_ind, gate_str):
+        if type(qbit_ind) is list:
+            pass
+        else:
+            qbit_ind = [qbit_ind]
+
+        for index, gate_lst in enumerate(self.gate_array):
+            if index in qbit_ind:
+                gate_lst.append(gate_str)
+            else:
+                gate_lst.append('')
+        return
+
+    def add_dq_gate(self, control_ind, target_ind, gate_str):
+        for index, gate_lst in enumerate(self.gate_array):
+            if index == control_ind:
+                gate_lst.append('CQ')
+            elif index == target_ind:
+                gate_lst.append('T' + gate_str)
+            else:
+                gate_lst.append('')
+        return
+
+    def apply_controlgate(self, contr):
+        return
+
+    def h(self, qbit_ind):
+        self.add_sq_gate(qbit_ind, 'H')
         return
 
     @staticmethod
-    def apply_h(qbit):
+    def apply_h(qbit=Qbit(1, 0)):
         hadamard_mat = 1 / np.sqrt(2) * np.array([[1,  1],
                                                   [1, -1]])
         qbit.state = hadamard_mat @ qbit.state
+        return hadamard_mat
+
+    def cnot(self, control_ind, target_ind):
+        self.add_dq_gate(self, control_ind, target_ind, 'N')
         return
 
     @staticmethod
@@ -74,29 +107,41 @@ class Circuit:
         resultant_state = cnot_mat @ combined_state
         return split_state(resultant_state)
 
+    def x(self, qbit_ind):
+        self.add_sq_gate(qbit_ind, 'X')
+        return
+
     @staticmethod
-    def apply_x(qbit):
+    def apply_x(qbit=Qbit(1, 0)):
         x_mat = np.array([[0, 1],
                           [1, 0]])
 
         qbit.state = x_mat @ qbit.state
         return
 
+    def y(self, qbit_ind):
+        self.add_sq_gate(qbit_ind, 'Y')
+        return
+
     @staticmethod
-    def apply_y(qbit):
+    def apply_y(qbit=Qbit(1, 0)):
         y_mat = np.array([[0, -j],
                           [j, 0]])
 
         qbit.state = y_mat @ qbit.state
+        return y_mat
+
+    def z(self, qbit_ind):
+        self.add_sq_gate(qbit_ind, 'Z')
         return
 
     @staticmethod
-    def apply_z(qbit):
+    def apply_z(qbit=Qbit(1, 0)):
         z_mat = np.array([[1, 0],
                           [0, -1]])
 
         qbit.state = z_mat @ qbit.state
-        return
+        return z_mat
 
 
 def main():
