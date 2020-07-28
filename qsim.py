@@ -22,7 +22,12 @@ def lst_to_str(lst):
 class Qbit:
 
     def __init__(self, c1, c2):
-        assert isclose((np.sqrt(c1**2 + c2**2)), 1.0, abs_tol=1e-5)
+        try:
+            assert isclose((np.sqrt(c1**2 + c2**2)), 1.0, abs_tol=1e-5)
+        except AssertionError:
+            print(np.sqrt(c1**2 + c2**2))
+            print(c1, c2)
+
         self.state = np.array([c1, c2])
         return
 
@@ -30,8 +35,8 @@ class Qbit:
         return "{0}|0> + {1}|1>".format(self.state[0], self.state[1])
 
     def measure(self, shots=1):
-        prob_0 = la.norm(self.state[0])
-        result = np.random.binomial(1, prob_0, size=shots)
+        prob_1 = la.norm(self.state[1])
+        result = np.random.binomial(1, prob_1, size=shots)
         return result
 
 
@@ -111,8 +116,13 @@ class Circuit:
                       [0, 0]])
 
         cntrl_mat = np.kron(a, unitary_mat) + np.kron(b, np.identity(2))
+        print(cntrl_mat)
+        print(control_qbit)
+        print(target_qbit)
         combined_state = np.kron(control_qbit.state, target_qbit.state)
+        print(combined_state)
         resultant_state = cntrl_mat @ combined_state
+        print(resultant_state)
 
         control_qbit.state, target_qbit.state = split_state(resultant_state)
         return
@@ -128,6 +138,7 @@ class Circuit:
 
         circ_depth = len(self.gate_array[0])
         for layer in range(circ_depth):
+            print('layer {}'.format(layer))
             for index, qbit in enumerate(self.lst_qbits):
                 meta_tuple = self.gate_array[index][layer]
                 gate_str = meta_tuple[0]
@@ -145,6 +156,8 @@ class Circuit:
                 else:
                     unitary_mat = self.gate_to_mat[gate_str]
                     self.apply_gate(qbit, unitary_mat)
+
+                print('q{0}: {1}|0> + {2}|1>'.format(index, qbit.state[0], qbit.state[1]))
 
         results_lst = []
         for qbit in self.lst_qbits:
@@ -208,7 +221,9 @@ class Circuit:
 
 def main():
     circ = Circuit(2, 2)
-    print(circ)
+    circ.h(0)
+    circ.cx(1, 0)
+    print(circ)    # constructed the bell state
     counts = circ.measure([0, 1], [0, 1], trails=1024)
     circ.plot_counts(counts)
     return
