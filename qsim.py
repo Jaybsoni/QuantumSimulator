@@ -7,8 +7,8 @@ from math import isclose
 
 def split_state(vect):
     assert (len(vect) == 4)
-    qbit1 = Qbit(vect[0] + vect[1], vect[2] + vect[3])
-    qbit2 = Qbit(vect[0] + vect[2], vect[1] + vect[3])
+    qbit1 = Qbit(np.sqrt(vect[0]**2 + vect[1]**2), np.sqrt(vect[2]**2 + vect[3]**2))
+    qbit2 = Qbit(np.sqrt(vect[0]**2 + vect[2]**2), np.sqrt(vect[1]**2 + vect[3]**2))
     return qbit1.state, qbit2.state
 
 
@@ -222,7 +222,7 @@ class Circuit:
 def main():
     circ = Circuit(2, 2)
     circ.h(0)
-    circ.cx(1, 0)
+    circ.cx(0, 1)
     print(circ)    # constructed the bell state
     counts = circ.measure([0, 1], [0, 1], trails=1024)
     circ.plot_counts(counts)
