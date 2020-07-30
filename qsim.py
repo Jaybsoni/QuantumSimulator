@@ -108,7 +108,7 @@ class Circuit:
         return
 
     @staticmethod
-    def apply_controlgate(control_qbit, target_qbit, unitary_mat):
+    def construct_controlgate(unitary_mat):
         a = np.array([[0, 0],
                       [0, 1]])
 
@@ -116,21 +116,12 @@ class Circuit:
                       [0, 0]])
 
         cntrl_mat = np.kron(a, unitary_mat) + np.kron(b, np.identity(2))
-        print(cntrl_mat)
-        print(control_qbit)
-        print(target_qbit)
-        combined_state = np.kron(control_qbit.state, target_qbit.state)
-        print(combined_state)
-        resultant_state = cntrl_mat @ combined_state
-        print(resultant_state)
+        return cntrl_mat
 
-        control_qbit.state, target_qbit.state = split_state(resultant_state)
-        return
-
-    @staticmethod
-    def apply_gate(qbit, unitary_mat):
-        qbit.state = unitary_mat @ qbit.state
-        return
+    # @staticmethod
+    # def apply_gate(qbit, unitary_mat):
+    #     qbit.state = unitary_mat @ qbit.state
+    #     return
 
     def measure(self, qbit_lst, bit_lst, trails=100):
         assert len(qbit_lst) == len(bit_lst)
@@ -138,7 +129,6 @@ class Circuit:
 
         circ_depth = len(self.gate_array[0])
         for layer in range(circ_depth):
-            print('layer {}'.format(layer))
             for index, qbit in enumerate(self.lst_qbits):
                 meta_tuple = self.gate_array[index][layer]
                 gate_str = meta_tuple[0]
@@ -156,8 +146,6 @@ class Circuit:
                 else:
                     unitary_mat = self.gate_to_mat[gate_str]
                     self.apply_gate(qbit, unitary_mat)
-
-                print('q{0}: {1}|0> + {2}|1>'.format(index, qbit.state[0], qbit.state[1]))
 
         results_lst = []
         for qbit in self.lst_qbits:
