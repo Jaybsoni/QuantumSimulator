@@ -57,17 +57,20 @@ class Circuit:
     gate_to_mat = {'H': h_mat,
                    'X': x_mat,
                    'Y': y_mat,
-                   'Z': z_mat}
+                   'Z': z_mat,
+                   '-': np.eye(2)}
 
     def __init__(self, num_qbits, num_bits):
         assert(num_qbits > 0)
-        self.lst_qbits = []
+        circuit_state = np.zeros(num_qbits, dtype=float)
+        circuit_state[0] = 1.0
+
+        self.circuit_state = circuit_state
         self.num_qbits = num_qbits
         self.num_bits = num_bits
         self.gate_array = []
 
         for i in range(num_qbits):
-            self.lst_qbits.append(Qbit(1, 0))
             self.gate_array.append([])
         return
 
@@ -118,10 +121,10 @@ class Circuit:
         cntrl_mat = np.kron(a, unitary_mat) + np.kron(b, np.identity(2))
         return cntrl_mat
 
-    # @staticmethod
-    # def apply_gate(qbit, unitary_mat):
-    #     qbit.state = unitary_mat @ qbit.state
-    #     return
+    @staticmethod
+    def apply_gate(qbit, unitary_mat):
+        qbit.state = unitary_mat @ qbit.state
+        return
 
     def measure(self, qbit_lst, bit_lst, trails=100):
         assert len(qbit_lst) == len(bit_lst)
@@ -129,23 +132,28 @@ class Circuit:
 
         circ_depth = len(self.gate_array[0])
         for layer in range(circ_depth):
-            for index, qbit in enumerate(self.lst_qbits):
+            gate = np.zeros([2, 2])  # the gate that will be applied to the state vector
+
+            for index in np.arange(self.num_qbits - 1, -1, -1):
                 meta_tuple = self.gate_array[index][layer]
                 gate_str = meta_tuple[0]
 
-                if gate_str == '-' or gate_str[0] == 'T':
+                if gate_str[0] == 'T':
                     pass
 
                 elif gate_str == 'CQ':
                     target_mat = self.gate_to_mat[meta_tuple[3]]
-                    target_qbit = self.lst_qbits[meta_tuple[2]]
-                    control_qbit = qbit
+                    target_indx = meta_tuple[2]
+                    control_indx = index
 
                     self.apply_controlgate(control_qbit, target_qbit, target_mat)
 
                 else:
                     unitary_mat = self.gate_to_mat[gate_str]
-                    self.apply_gate(qbit, unitary_mat)
+                    if layer == 0:
+                        gate = unitary_mat
+                    else:
+                        gate = np.kron(gate, unitary_mat)
 
         results_lst = []
         for qbit in self.lst_qbits:
