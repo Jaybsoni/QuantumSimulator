@@ -132,7 +132,7 @@ class Circuit:
 
         circ_depth = len(self.gate_array[0])
         for layer in range(circ_depth):
-            gate = np.zeros([2, 2])  # the gate that will be applied to the state vector
+            gate = np.eye(2)  # the gate that will be applied to the state vector
 
             for index in np.arange(self.num_qbits - 1, -1, -1):
                 meta_tuple = self.gate_array[index][layer]
@@ -226,5 +226,4 @@ def main():
 
 
 if __name__ == "__main__":
-    ## Added a comment 
     main()
