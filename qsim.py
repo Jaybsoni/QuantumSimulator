@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from math import isclose
 
 
-def split_state(vect):
+def split_state(vect):  # only allowed on tensor decomposable states
     assert (len(vect) == 4)
     qbit1 = Qbit(np.sqrt(vect[0]**2 + vect[1]**2), np.sqrt(vect[2]**2 + vect[3]**2))
     qbit2 = Qbit(np.sqrt(vect[0]**2 + vect[2]**2), np.sqrt(vect[1]**2 + vect[3]**2))
@@ -62,6 +62,8 @@ class Circuit:
 
     def __init__(self, num_qbits, num_bits):
         assert(num_qbits > 0)
+        assert(num_bits <= num_qbits)
+
         circuit_state = np.zeros(num_qbits, dtype=float)
         circuit_state[0] = 1.0
 
@@ -78,11 +80,14 @@ class Circuit:
         disp_circuit = ''
         for i in range(self.num_qbits):
             row = 'q{}: |0>'.format(i)
+
             for meta_tuple in self.gate_array[i]:
                 gate_str = meta_tuple[0]
                 row += '--{0}'.format(gate_str)
+
             row += '--M\n'
             disp_circuit += row
+
         return disp_circuit
 
     def add_sq_gate(self, qbit_ind, gate_str):
@@ -110,20 +115,13 @@ class Circuit:
             gate_lst.append(meta_tuple)
         return
 
-    @staticmethod
-    def construct_controlgate(unitary_mat):
-        a = np.array([[0, 0],
-                      [0, 1]])
+    def construct_controlgate(self, control, target, unitary_mat):
 
-        b = np.array([[1, 0],
-                      [0, 0]])
-
-        cntrl_mat = np.kron(a, unitary_mat) + np.kron(b, np.identity(2))
+        cntrl_mat = 0
         return cntrl_mat
 
-    @staticmethod
-    def apply_gate(qbit, unitary_mat):
-        qbit.state = unitary_mat @ qbit.state
+    def apply_gate(self, gate_matrix):
+        self.circuit_state = gate_matrix @ self.circuit_state
         return
 
     def measure(self, qbit_lst, bit_lst, trails=100):
@@ -133,6 +131,7 @@ class Circuit:
         circ_depth = len(self.gate_array[0])
         for layer in range(circ_depth):
             gate = np.eye(2)  # the gate that will be applied to the state vector
+            layer_array = []  # an array of
 
             for index in np.arange(self.num_qbits - 1, -1, -1):
                 meta_tuple = self.gate_array[index][layer]
@@ -146,7 +145,7 @@ class Circuit:
                     target_indx = meta_tuple[2]
                     control_indx = index
 
-                    self.apply_controlgate(control_qbit, target_qbit, target_mat)
+                    self.construct_controlgate(control_indx, target_indx, target_mat)
 
                 else:
                     unitary_mat = self.gate_to_mat[gate_str]
@@ -154,6 +153,8 @@ class Circuit:
                         gate = unitary_mat
                     else:
                         gate = np.kron(gate, unitary_mat)
+
+            self.apply_gate(gate)
 
         results_lst = []
         for qbit in self.lst_qbits:
