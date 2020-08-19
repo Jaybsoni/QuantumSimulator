@@ -157,7 +157,7 @@ class Circuit:
         return
 
     def construct_controlgate(self, control, target, unitary_mat):
-
+        unique_qbit_combinations = q_bit_ittorator(control, target, self.num_qbits)
         cntrl_mat = 0
         return cntrl_mat
 
