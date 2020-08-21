@@ -36,7 +36,7 @@ def q_bit_ittorator(bit1, bit2, n):
 
             # Convert each list of ints (1s & 0s) to a list of strings
             strings = [str(i) for i in binary_combinations[i]]
-            as_a_int = int("".join(strings), 2)   # Join, then turn to int
+            thing =  "".join(strings)
 
             # Only add to the return list if it's unique
             if as_a_int not in return_list:
