@@ -110,18 +110,32 @@ class Circuit:
         self.num_bits = num_bits
         self.gate_array = []
 
-        for i in range(num_qbits):
-            self.gate_array.append([])
         return
 
     def __repr__(self):
         disp_circuit = ''
         for i in range(self.num_qbits):
-            row = 'q{}: |0>'.format(i)
+            row = 'q{}: |0>--'.format(i)
 
-            for meta_tuple in self.gate_array[i]:
-                gate_str = meta_tuple[0]
-                row += '--{0}'.format(gate_str)
+            for tuple_array in self.gate_array:
+                for meta_tuple in tuple_array:
+
+                    if len(meta_tuple) == 4:
+                        if meta_tuple[1] == i:
+                            row += meta_tuple[0] + '-'
+
+                        elif meta_tuple[2] == i:
+                            row += 'T' + meta_tuple[3] + '-'
+
+                        else:
+                            row += '---'
+
+                    else:
+                        if meta_tuple[1] == i:
+                            row += meta_tuple[0] + '--'
+
+                        else:
+                            row += '---'
 
             row += '--M\n'
             disp_circuit += row
@@ -129,38 +143,40 @@ class Circuit:
         return disp_circuit
 
     def add_sq_gate(self, qbit_ind, gate_str):
-        if type(qbit_ind) is list:
-            pass
-        else:
+        if not type(qbit_ind) is list:
             qbit_ind = [qbit_ind]
 
-        for index, gate_lst in enumerate(self.gate_array):
-            if index in qbit_ind:
-                meta_tuple = (gate_str, index)
-            else:
-                meta_tuple = ('-', index)
-            gate_lst.append(meta_tuple)
+        tuple_lst = []
+        for index in qbit_ind:
+            meta_tuple = (gate_str, index)
+            tuple_lst.append(meta_tuple)
+
+        self.gate_array.append(tuple_lst)
+
         return
 
     def add_dq_gate(self, control_ind, target_ind, gate_str):
-        for index, gate_lst in enumerate(self.gate_array):
-            if index == control_ind:
-                meta_tuple = ('CQ', control_ind, target_ind, gate_str)
-            elif index == target_ind:
-                meta_tuple = ('T' + gate_str, control_ind, target_ind, gate_str)
-            else:
-                meta_tuple = ('-', index)
-            gate_lst.append(meta_tuple)
+        meta_tuple = ('CQ', control_ind, target_ind, gate_str)
+        self.gate_array.append([meta_tuple])
+
         return
 
     def apply_controlgate(self, control, target, unitary_mat):
         unique_qbit_combinations = binary_ittorator(control, target, self.num_qbits)
 
         for combination in unique_qbit_combinations:
-            index_0 = 
+            q0_comb = combination
+            q1_comb = combination[:target] + '1' + combination[target + 1:]
+            index_0 = int(q0_comb, 2)
+            index_1 = int(q1_comb, 2)
 
-        cntrl_mat = 0
-        return cntrl_mat
+            substate_vect = np.array([self.circuit_state[index_0], self.circuit_state[index_1]])
+            substate_vect = unitary_mat @ substate_vect
+
+            self.circuit_state[index_0] = substate_vect[0]
+            self.circuit_state[index_1] = substate_vect[1]
+
+        return
 
     def apply_gate(self, gate_matrix):
         self.circuit_state = gate_matrix @ self.circuit_state
@@ -258,15 +274,9 @@ class Circuit:
         return
 
 
-def main():
-    # circ = Circuit(2, 2)
-    # circ.h(0)
-    # circ.cx(0, 1)
-    # print(circ)    # constructed the bell state
-    # counts = circ.measure([0, 1], [0, 1], trails=1024)
-    # circ.plot_counts(counts)
-    return
-
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     return
+#
+#
+# if __name__ == "__main__":
+#     main()
