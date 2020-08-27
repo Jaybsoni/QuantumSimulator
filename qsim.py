@@ -153,8 +153,12 @@ class Circuit:
             gate_lst.append(meta_tuple)
         return
 
-    def construct_controlgate(self, control, target, unitary_mat):
-        unique_qbit_combinations = q_bit_ittorator(control, target, self.num_qbits)
+    def apply_controlgate(self, control, target, unitary_mat):
+        unique_qbit_combinations = binary_ittorator(control, target, self.num_qbits)
+
+        for combination in unique_qbit_combinations:
+            index_0 = 
+
         cntrl_mat = 0
         return cntrl_mat
 
@@ -183,7 +187,7 @@ class Circuit:
                     target_indx = meta_tuple[2]
                     control_indx = index
 
-                    self.construct_controlgate(control_indx, target_indx, target_mat)
+                    self.apply_controlgate(control_indx, target_indx, target_mat)
 
                 else:
                     unitary_mat = self.gate_to_mat[gate_str]
@@ -255,12 +259,12 @@ class Circuit:
 
 
 def main():
-    circ = Circuit(2, 2)
-    circ.h(0)
-    circ.cx(0, 1)
-    print(circ)    # constructed the bell state
-    counts = circ.measure([0, 1], [0, 1], trails=1024)
-    circ.plot_counts(counts)
+    # circ = Circuit(2, 2)
+    # circ.h(0)
+    # circ.cx(0, 1)
+    # print(circ)    # constructed the bell state
+    # counts = circ.measure([0, 1], [0, 1], trails=1024)
+    # circ.plot_counts(counts)
     return
 
 
