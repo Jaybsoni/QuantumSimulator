@@ -95,14 +95,13 @@ class Circuit:
     gate_to_mat = {'H': h_mat,
                    'X': x_mat,
                    'Y': y_mat,
-                   'Z': z_mat,
-                   '-': np.eye(2)}
+                   'Z': z_mat}
 
     def __init__(self, num_qbits, num_bits):
         assert(num_qbits > 0)
         assert(num_bits <= num_qbits)
 
-        circuit_state = np.zeros(num_qbits, dtype=float)
+        circuit_state = np.zeros(2**num_qbits, dtype=float)
         circuit_state[0] = 1.0
 
         self.circuit_state = circuit_state
@@ -113,51 +112,46 @@ class Circuit:
         return
 
     def __repr__(self):
-        disp_circuit = ''
+        display = ''
+        circuit_rows = []
+
         for i in range(self.num_qbits):
-            row = 'q{}: |0>--'.format(i)
+            circuit_rows.append(['q{}: |0>--'.format(i)])
 
-            for tuple_array in self.gate_array:
-                for meta_tuple in tuple_array:
+        for meta_tuple in self.gate_array:
+            if len(meta_tuple) == 3:
+                control_index = meta_tuple[1][0]
+                target_index = meta_tuple[1][1]
 
-                    if len(meta_tuple) == 4:
-                        if meta_tuple[1] == i:
-                            row += meta_tuple[0] + '-'
+                circuit_rows[control_index].append('CQ-')
+                circuit_rows[target_index].append('T{}-'.format(meta_tuple[2]))
 
-                        elif meta_tuple[2] == i:
-                            row += 'T' + meta_tuple[3] + '-'
+            else:
+                for index in meta_tuple[1]:
+                    circuit_rows[index].append(meta_tuple[0] + '--')
 
-                        else:
-                            row += '---'
+            max_len = max([len(row) for row in circuit_rows])
+            for row in circuit_rows:
+                while len(row) < max_len:
+                    row.append('---')
 
-                    else:
-                        if meta_tuple[1] == i:
-                            row += meta_tuple[0] + '--'
+        for row in circuit_rows:
+            display += "".join(row) + '--M\n'
 
-                        else:
-                            row += '---'
-
-            row += '--M\n'
-            disp_circuit += row
-
-        return disp_circuit
+        return display
 
     def add_sq_gate(self, qbit_ind, gate_str):
         if not type(qbit_ind) is list:
             qbit_ind = [qbit_ind]
 
-        tuple_lst = []
-        for index in qbit_ind:
-            meta_tuple = (gate_str, index)
-            tuple_lst.append(meta_tuple)
-
-        self.gate_array.append(tuple_lst)
+        meta_tuple = (gate_str, qbit_ind)
+        self.gate_array.append(meta_tuple)
 
         return
 
     def add_dq_gate(self, control_ind, target_ind, gate_str):
-        meta_tuple = ('CQ', control_ind, target_ind, gate_str)
-        self.gate_array.append([meta_tuple])
+        meta_tuple = ('CQ', [control_ind, target_ind], gate_str)
+        self.gate_array.append(meta_tuple)
 
         return
 
@@ -182,57 +176,39 @@ class Circuit:
         self.circuit_state = gate_matrix @ self.circuit_state
         return
 
-    def measure(self, qbit_lst, bit_lst, trails=100):
-        assert len(qbit_lst) == len(bit_lst)
-        assert len(bit_lst) == self.num_bits
+    def simulate(self, status=True):
+        total_layers = len(self.gate_array)
 
-        circ_depth = len(self.gate_array[0])
-        for layer in range(circ_depth):
-            gate = np.eye(2)  # the gate that will be applied to the state vector
-            layer_array = []  # an array of
+        for layer, meta_tuple in enumerate(self.gate_array):
+            if status:
+                print('Processing layer {}/{} ...\r'.format(layer + 1, total_layers))
 
-            for index in np.arange(self.num_qbits - 1, -1, -1):
-                meta_tuple = self.gate_array[index][layer]
-                gate_str = meta_tuple[0]
+            gate_str = meta_tuple[0]
 
-                if gate_str[0] == 'T':
-                    pass
+            if gate_str == 'CQ':
+                control_indx = meta_tuple[1][0]
+                target_indx = meta_tuple[1][0]
+                unitary_mat = self.gate_to_mat[meta_tuple[2]]
+                self.apply_controlgate(control_indx, target_indx, unitary_mat)
 
-                elif gate_str == 'CQ':
-                    target_mat = self.gate_to_mat[meta_tuple[3]]
-                    target_indx = meta_tuple[2]
-                    control_indx = index
-
-                    self.apply_controlgate(control_indx, target_indx, target_mat)
-
-                else:
-                    unitary_mat = self.gate_to_mat[gate_str]
-                    if layer == 0:
-                        gate = unitary_mat
-                    else:
-                        gate = np.kron(gate, unitary_mat)
-
-            self.apply_gate(gate)
-
-        results_lst = []
-        for qbit in self.lst_qbits:
-            result = qbit.measure(shots=trails)
-            results_lst.append(result)
-
-        final_results_lst = np.zeros((self.num_bits, trails))
-        for i, j in zip(qbit_lst, bit_lst):
-            final_results_lst[j] = results_lst[i]
-
-        final_results_lst = np.transpose(final_results_lst)
-        counts_dict = {}
-        for row in final_results_lst:
-            state_label = lst_to_str(row)
-            if state_label in counts_dict:
-                counts_dict[state_label] += 1
             else:
-                counts_dict[state_label] = 1
+                gate = np.eye(2)  # the gate that will be applied to the state vector
+                if self.num_qbits - 1 in meta_tuple[1]:
+                    gate = self.gate_to_mat[gate_str]
 
-        return counts_dict
+                for index in np.arange(self.num_qbits - 2, -1, -1):
+                    unitary_mat = self.gate_to_mat[gate_str]
+
+                    qbit_gate = np.eye(2)
+                    if index in meta_tuple[1]:
+                        qbit_gate = unitary_mat
+
+                    gate = np.kron(gate, qbit_gate)
+                self.apply_gate(gate)
+
+        if status:
+            print('Done!')
+        return
 
     @staticmethod
     def plot_counts(counts):
