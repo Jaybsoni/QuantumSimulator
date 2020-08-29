@@ -8,8 +8,8 @@ import itertools
 
 def binary_ittorator(control_bit, target_bit, n):
     """
-    create all possible binary integers of bit length n with the known control_bit, target_bit positions
-    held constant. Return list of all binary variations (as strs)
+    create all possible binary integers of bit length n with the known control_bit,
+    target_bit positions held constant. Return list of all binary variations (as strs)
 
     :param control_bit: int
     :param target_bit: int
@@ -43,18 +43,26 @@ def binary_ittorator(control_bit, target_bit, n):
         return return_list
 
 
-def split_state(vect):  # only allowed on tensor decomposable states
-    assert (len(vect) == 4)
-    qbit1 = Qbit(np.sqrt(vect[0]**2 + vect[1]**2), np.sqrt(vect[2]**2 + vect[3]**2))
-    qbit2 = Qbit(np.sqrt(vect[0]**2 + vect[2]**2), np.sqrt(vect[1]**2 + vect[3]**2))
-    return qbit1.state, qbit2.state
+def get_binary(x, n):
+    """
+    determine the binary representation of an int x (base 10) given that
+    x <= 2^n where n is an int representing the total bit length.
 
+    :param x: base 10 int of interest
+    :param n: base 10 int, bit length
+    :return: str x as written in base 2
+    """
+    binary_result = ''
+    target = x
 
-def lst_to_str(lst):
-    result = ''
-    for i in lst:
-        result += str(int(i))  # sometimes i is a float
-    return result
+    for i in np.arange(n-1, -1, -1):
+        if 2**i > target:
+            binary_result += '0'
+        else:
+            binary_result += '1'
+            target -= 2**i
+
+    return binary_result
 
 
 class Qbit:
@@ -62,11 +70,13 @@ class Qbit:
     def __init__(self, c1, c2):
         try:
             assert isclose((np.sqrt(c1**2 + c2**2)), 1.0, abs_tol=1e-5)
-        except AssertionError:
+        except AssertionError as error:
             print(np.sqrt(c1**2 + c2**2))
             print(c1, c2)
+            print(error)
+        else:
+            self.state = np.array([c1, c2])
 
-        self.state = np.array([c1, c2])
         return
 
     def __repr__(self):
@@ -97,16 +107,14 @@ class Circuit:
                    'Y': y_mat,
                    'Z': z_mat}
 
-    def __init__(self, num_qbits, num_bits):
+    def __init__(self, num_qbits):
         assert(num_qbits > 0)
-        assert(num_bits <= num_qbits)
 
         circuit_state = np.zeros(2**num_qbits, dtype=float)
         circuit_state[0] = 1.0
 
         self.circuit_state = circuit_state
         self.num_qbits = num_qbits
-        self.num_bits = num_bits
         self.gate_array = []
 
         return
@@ -140,22 +148,22 @@ class Circuit:
 
         return display
 
-    def add_sq_gate(self, qbit_ind, gate_str):
-        if not type(qbit_ind) is list:
-            qbit_ind = [qbit_ind]
+    def add_sq_gate(self, qbit, gate_str):
+        if not type(qbit) is list:
+            qbit = [qbit]
 
-        meta_tuple = (gate_str, qbit_ind)
+        meta_tuple = (gate_str, qbit)
         self.gate_array.append(meta_tuple)
-
         return
 
     def add_dq_gate(self, control_ind, target_ind, gate_str):
         meta_tuple = ('CQ', [control_ind, target_ind], gate_str)
         self.gate_array.append(meta_tuple)
-
         return
 
-    def apply_controlgate(self, control, target, unitary_mat):
+    def apply_controlgate(self, control_ind, target_ind, unitary_mat):
+        control = (self.num_qbits - 1) - control_ind
+        target = (self.num_qbits - 1) - target_ind
         unique_qbit_combinations = binary_ittorator(control, target, self.num_qbits)
 
         for combination in unique_qbit_combinations:
@@ -169,25 +177,24 @@ class Circuit:
 
             self.circuit_state[index_0] = substate_vect[0]
             self.circuit_state[index_1] = substate_vect[1]
-
         return
 
     def apply_gate(self, gate_matrix):
         self.circuit_state = gate_matrix @ self.circuit_state
         return
 
-    def simulate(self, status=True):
+    def run(self, status=True):
         total_layers = len(self.gate_array)
 
         for layer, meta_tuple in enumerate(self.gate_array):
             if status:
-                print('Processing layer {}/{} ...\r'.format(layer + 1, total_layers))
+                print('Processing layer {}/{} ...'.format(layer + 1, total_layers))
 
             gate_str = meta_tuple[0]
 
             if gate_str == 'CQ':
                 control_indx = meta_tuple[1][0]
-                target_indx = meta_tuple[1][0]
+                target_indx = meta_tuple[1][1]
                 unitary_mat = self.gate_to_mat[meta_tuple[2]]
                 self.apply_controlgate(control_indx, target_indx, unitary_mat)
 
@@ -210,6 +217,17 @@ class Circuit:
             print('Done!')
         return
 
+    def simulate(self, shots=100):
+        probabilities = self.circuit_state * self.circuit_state
+        results = np.random.multinomial(shots, probabilities, size=1)
+        counts = {}
+
+        for index, value in enumerate(results[0]):
+            key = get_binary(index, self.num_qbits)
+            counts[key] = value
+
+        return counts
+
     @staticmethod
     def plot_counts(counts):
         plt.bar(range(len(counts)), counts.values())
@@ -217,42 +235,42 @@ class Circuit:
         plt.show()
         return
 
-    def h(self, qbit_ind):
-        self.add_sq_gate(qbit_ind, 'H')
+    def h(self, qbit):
+        self.add_sq_gate(qbit, 'H')
         return
 
-    def ch(self, control_ind, target_ind):
-        self.add_dq_gate(control_ind, target_ind, 'H')
+    def ch(self, control_qbit, target_qbit):
+        self.add_dq_gate(control_qbit, target_qbit, 'H')
         return
 
-    def x(self, qbit_ind):
-        self.add_sq_gate(qbit_ind, 'X')
+    def x(self, qbit):
+        self.add_sq_gate(qbit, 'X')
         return
 
-    def cx(self, control_ind, target_ind):
-        self.add_dq_gate(control_ind, target_ind, 'X')
+    def cx(self, control_qbit, target_qbit):
+        self.add_dq_gate(control_qbit, target_qbit, 'X')
         return
 
-    def y(self, qbit_ind):
-        self.add_sq_gate(qbit_ind, 'Y')
+    def y(self, qbit):
+        self.add_sq_gate(qbit, 'Y')
         return
 
-    def cy(self, control_ind, target_ind):
-        self.add_dq_gate(control_ind, target_ind, 'Y')
+    def cy(self, control_qbit, target_qbit):
+        self.add_dq_gate(control_qbit, target_qbit, 'Y')
         return
 
-    def z(self, qbit_ind):
-        self.add_sq_gate(qbit_ind, 'Z')
+    def z(self, qbit):
+        self.add_sq_gate(qbit, 'Z')
         return
 
-    def cz(self, control_ind, target_ind):
-        self.add_dq_gate(control_ind, target_ind, 'Z')
+    def cz(self, control_qbit, target_qbit):
+        self.add_dq_gate(control_qbit, target_qbit, 'Z')
         return
 
 
-# def main():
-#     return
-#
-#
-# if __name__ == "__main__":
-#     main()
+def main():
+    return
+
+
+if __name__ == "__main__":
+    main()
