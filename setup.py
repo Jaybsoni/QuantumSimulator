@@ -6,7 +6,5 @@ setup(name='qsim',
       description='A quantum simulator',
       author='Jay Soni',
       packages=['qsim'],
-      license='MIT'
-      install_requires=[
-          'numpy',
-          'matplotlib'])
+      license='MIT', install_requires=['numpy', 'matplotlib']
+      )
