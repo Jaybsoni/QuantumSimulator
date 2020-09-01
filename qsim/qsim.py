@@ -346,7 +346,7 @@ class Circuit:
 
     def cs(self, control_qbit, target_qbit):
         self.add_dq_gate(control_qbit, target_qbit, 'S')
-        return       
+        return
 
 
 def main():
