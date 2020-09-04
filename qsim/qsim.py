@@ -285,7 +285,11 @@ class Circuit:
         :return: dict, a dictionary with key is a str representing measureable state, value is int of observations
         """
         probabilities = self.circuit_state * self.circuit_state        # the coefficients are probabiltiy amplitudes
-        probabilities = [float(i) for i in probabilities]   # in case probabilities are type complex instead of float
+        try:
+            probabilities = [float(i) for i in probabilities]        # in case probabilities are type complex
+        except np.ComplexWarning:
+            probabilities = [float(i) for i in probabilities]       # do it anyways since the complex componant = 0
+
         results = np.random.multinomial(shots, probabilities, size=1)
         counts = {}
 
