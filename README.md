@@ -17,7 +17,7 @@ An instance of Qbit can be constructed as follows:  ` psi = qsim.Qbit(1/2, (3)**
 
 We can visually display this instance by printing it:  ` print(psi) ` 
 
-![print qbit](/images/print_qbit.png?raw=true)
+![print qbit](/images/print_qbit.PNG?raw=true)
 
 Once we have constructed a state we can simulate making repeated independant measurements of the state as follows: 
 
@@ -25,7 +25,7 @@ Once we have constructed a state we can simulate making repeated independant mea
 
 ` print(results) ` 
 
-![print_qbit_results](/images/print_qbit_results.png?raw=true)
+![print_qbit_results](/images/print_qbit_results.PNG?raw=true)
 
 ## Circuit Class:
 A Circuit object represents the quantum circuit we would be running on the quantum computer. We initialize it by passing in the number of qbits we want to simulate. More qbits = longer processing time (it grows exponentially). 
@@ -36,7 +36,7 @@ We can then visualize our circuit by: ` print(circ) `
 
 An important attribute of the circuit is its state vector, which is a quantum state in 2^n dim Hilbert Space, where n represents the number of qbits in the circuit. We can visualize this state vector by calling; ` print(circ.circuit_state) ` 
 
-![circuit and state vector](/images/circ_state.png?raw=true)
+![circuit and state vector](/images/circ_state.PNG?raw=true)
 
 No quantum circuit is complete without the application of quantum gates. These are normalized unitary matricies which act on the qbits to transform their probability amplitudes. In some cases the quantum gates get more complicated (double and triple qbit gates). I have implemented a series of common gates such as the hadamard gate, the pauli-X, pauli-Y, Pauli-Z gates and the Phase gate. I have also implemented the 2 qbit controlled version of these gates: (CX, CY, CZ, CH, CS). For additional information about these gates check out the wikipedia page: [Quantum Logic Gates](https://en.wikipedia.org/wiki/Quantum_logic_gate)
 
@@ -64,7 +64,7 @@ Other possible gates include:
 
 Currently our circuit looks like this: 
 
-![print circuit](/images/display_circuit.png?raw=true)
+![print circuit](/images/display_circuit.PNG?raw=true)
 
 *we have not run the circuit so our circuit state is still initialized to the 0 state for all of our qbits* 
 
@@ -76,7 +76,7 @@ We can measure our circuit by:
 
 ` circ.plot_counts(counts) ` 
 
-![final results](/images/results.png?raw=true)
+![final results](/images/results.PNG?raw=true)
 
 ## Acknowledgements: 
 - Qiskit documentation : For helping me learn some of the mathematical background of quantum computing 
